@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HumanResources.Api/HumanResources.Api.csproj" />
+    <Project Path="src/HumanResources.Application/HumanResources.Application.csproj" />
+    <Project Path="src/HumanResources.Domain/HumanResources.Domain.csproj" />
+    <Project Path="src/HumanResources.Infrastructure/HumanResources.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HumanResources.UnitTests/HumanResources.UnitTests.csproj" />
+  </Folder>
+</Solution>

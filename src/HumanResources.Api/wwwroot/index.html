@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Human Resources Management System — Enterprise Leave Engine</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2'><rect x='2' y='7' width='20' height='14' rx='2' ry='2'/><path d='M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16'/></svg>">
+</head>
+<body>
+
+  <!-- Top Enterprise Navigation Bar -->
+  <header class="app-header">
+    <a href="/" class="brand">
+      <div class="brand-icon-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </div>
+      <div class="brand-title">
+        HR Enterprise <span class="brand-badge">Clean Architecture</span>
+      </div>
+    </a>
+
+    <div class="header-right">
+      <!-- Persona Switcher -->
+      <div class="persona-select-container">
+        <label for="persona-select" class="persona-select-label">Kullanıcı:</label>
+        <select id="persona-select" class="persona-dropdown" aria-label="Aktif Personeli Değiştir"></select>
+      </div>
+
+      <!-- Links -->
+      <a href="/swagger" target="_blank" class="header-nav-link" title="OpenAPI / Swagger Spesifikasyonu">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        Swagger API
+      </a>
+      <a href="https://github.com/EmreSlgr/hr-management-clean-architecture" target="_blank" class="header-nav-link" title="Kaynak Kodları">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </header>
+
+  <!-- Horizontal Sub-Navigation -->
+  <nav class="sub-nav">
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-tab="dashboard">
+        Genel Bakış
+      </button>
+      <button class="tab-btn" data-tab="leaves">
+        İzin Taleplerim
+      </button>
+      <button class="tab-btn" data-tab="inbox" style="display: none;">
+        İK Onay Masası <span class="tab-counter" id="inbox-pending-count" style="display: none;">0</span>
+      </button>
+      <button class="tab-btn" data-tab="directory">
+        Organizasyon & Departmanlar
+      </button>
+    </div>
+
+    <div class="user-profile-badge">
+      <span>Oturum:</span>
+      <strong id="current-user-name" style="color: var(--text-primary);">-</strong>
+      <span id="current-user-role" class="role-tag">-</span>
+    </div>
+  </nav>
+
+  <!-- Main Viewport -->
+  <main class="main-wrapper">
+
+    <!-- TAB 1: Dashboard -->
+    <section id="tab-view-dashboard" class="tab-view active">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Genel Bakış</h1>
+          <p class="page-description">Yıllık izin bakiye özeti ve son izin hareketleriniz.</p>
+        </div>
+        <button class="btn btn-primary" onclick="App.openCreateLeaveModal()">
+          Yeni İzin Talebi
+        </button>
+      </div>
+
+      <!-- Metrics Grid -->
+      <div class="metrics-grid" id="stats-grid-container"></div>
+
+      <!-- Recent Leaves Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Son İzin Hareketleri</span>
+          <button class="btn btn-secondary btn-sm" onclick="App.switchTab('leaves')">Tümünü İncele</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 80px;">No</th>
+                <th style="width: 140px;">İzin Türü</th>
+                <th>Tarih Aralığı</th>
+                <th style="width: 90px;">Süre</th>
+                <th style="width: 130px;">Durum</th>
+                <th>Açıklama / Red Gerekçesi</th>
+                <th style="width: 100px; text-align: right;">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="recent-leaves-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: My Leaves -->
+    <section id="tab-view-leaves" class="tab-view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">İzin Taleplerim</h1>
+          <p class="page-description">Şirket nezdindeki tüm geçmiş ve aktif izin başvurularınız.</p>
+        </div>
+        <button class="btn btn-primary" onclick="App.openCreateLeaveModal()">
+          Yeni İzin Talebi
+        </button>
+      </div>
+
+      <div class="panel">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 80px;">No</th>
+                <th style="width: 140px;">İzin Türü</th>
+                <th>Tarih Aralığı</th>
+                <th style="width: 90px;">Süre</th>
+                <th style="width: 130px;">Durum</th>
+                <th>Açıklama / Red Gerekçesi</th>
+                <th style="width: 100px; text-align: right;">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="my-leaves-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: HR Approvals Inbox -->
+    <section id="tab-view-inbox" class="tab-view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">İK Onay Masası</h1>
+          <p class="page-description">Yetkiniz dahilindeki personellerin onay bekleyen izin başvuruları.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="App.refreshAllData()">
+          Yenile
+        </button>
+      </div>
+
+      <div class="inbox-list" id="inbox-grid-container"></div>
+    </section>
+
+    <!-- TAB 4: Directory -->
+    <section id="tab-view-directory" class="tab-view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Organizasyon & Departmanlar</h1>
+          <p class="page-description">Departman bazında personel kadrosu ve kayıtlı izin bakiyeleri.</p>
+        </div>
+      </div>
+
+      <div id="directory-container"></div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Create Leave Request -->
+  <div id="modal-create-leave" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">Yeni İzin Talebi</span>
+        <button class="modal-close-btn" onclick="App.closeCreateLeaveModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="leave-request-form">
+        <div class="modal-body">
+          
+          <div class="form-group">
+            <label class="form-label" for="leave-type-select">İzin Türü</label>
+            <select id="leave-type-select" class="form-control" required>
+              <option value="1">Yıllık İzin (Ücretli Bakiyeden Düşer)</option>
+              <option value="2">Hastalık İzni (Raporlu)</option>
+              <option value="3">Doğum / Ebeveyn İzni</option>
+              <option value="4">Ücretsiz İzin</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label" for="leave-start-date">Başlangıç Tarihi</label>
+              <input type="date" id="leave-start-date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="leave-end-date">Bitiş Tarihi</label>
+              <input type="date" id="leave-end-date" class="form-control" required>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-hairline);">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Hesaplanan Süre:</span>
+            <span id="calculated-days" style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums;">0 gün</span>
+          </div>
+
+          <div id="leave-balance-alert" class="alert-box"></div>
+
+          <div class="form-group">
+            <label class="form-label" for="leave-reason">Açıklama / Gerekçe</label>
+            <textarea id="leave-reason" class="form-control" style="min-height: 75px; resize: vertical;" placeholder="İzin kullanım amacınızı kısaca belirtiniz..." required></textarea>
+            <span class="form-help">Talep onay sürecinde ilgili birim yöneticisi tarafından incelenecektir.</span>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeCreateLeaveModal()">İptal</button>
+          <button type="submit" class="btn btn-primary">Talebi Gönder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Reject Leave Reason -->
+  <div id="modal-reject-leave" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title" id="reject-modal-title">İzin Reddetme</span>
+        <button class="modal-close-btn" onclick="App.closeRejectModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="reject-form">
+        <div class="modal-body">
+          <p style="font-size: 0.82rem; color: var(--text-secondary);">
+            Domain kuralları gereği izin reddinde açıklama girilmesi zorunludur.
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="reject-reason-input">Red Gerekçesi</label>
+            <textarea id="reject-reason-input" class="form-control" style="min-height: 75px; resize: vertical;" placeholder="Red gerekçesini belirtiniz..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="App.closeRejectModal()">Vazgeç</button>
+          <button type="submit" class="btn btn-danger">Reddet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/components.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
